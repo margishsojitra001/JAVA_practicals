@@ -1,6 +1,7 @@
 import java.util.Scanner;
 
-record BankInfo(String name, String branch) {}
+record BankInfo(String name, String branch) {
+}
 
 enum MenuOption {
     OPEN_ACCOUNT,
@@ -12,78 +13,72 @@ enum MenuOption {
 
 public class MiniBank {
 
-    public static class Customer {
+    public static class Customer implements Cloneable {
+
         private String name;
-        private String email;
-        private String mobile;
-        private final String customerId;
+        private Address address;
 
-        private static long customerCounter = 101;
-
-        private static String generateCustomerId() {
-            return "CUST" + customerCounter++;
-        }
-
-        public Customer(String name, String email, String mobile) {
+        public Customer(String name, Address address) {
             this.name = name;
-            this.email = email;
-            this.mobile = mobile;
-            this.customerId = generateCustomerId();
+            this.address = address;
         }
 
         public String getName() {
             return name;
         }
 
-        public String getEmail() {
-            return email;
+        public Address getAddress() {
+            return address;
         }
 
-        public String getMobile() {
-            return mobile;
+        public static class Address {
+
+            private String line;
+            private String city;
+            private String pincode;
+
+            public Address(String line, String city, String pincode) {
+                this.line = line;
+                this.city = city;
+                this.pincode = pincode;
+            }
+
+            public String getLine() {
+                return line;
+            }
+
+            public String getCity() {
+                return city;
+            }
+
+            public String getPincode() {
+                return pincode;
+            }
         }
 
-        public String getCustomerId() {
-            return customerId;
+        @Override
+        public Customer clone() {
+            try {
+                return (Customer) super.clone();
+            } catch (CloneNotSupportedException e) {
+                return null;
+            }
         }
     }
 
     public static class Account {
-        private final String accountNumber;
+
+        private int accountNumber;
         private String ownerName;
-        private long balance;
-        private boolean active;
+        private double balance;
 
-        private static long accountCounter = 1;
-
-        private static String generateAccountNumber() {
-            return String.format("AC%04d", accountCounter++);
-        }
-
-        public Account(String ownerName, long balance) {
-            this.accountNumber = generateAccountNumber();
+        public Account(int accountNumber, String ownerName, double balance) {
+            this.accountNumber = accountNumber;
             this.ownerName = ownerName;
             this.balance = balance;
-            this.active = true;
         }
 
-        public Account(String ownerName) {
-            this(ownerName, 0);
-        }
-
-        public void deposit(long amount) {
-            balance += amount;
-        }
-
-        public boolean withdraw(long amount) {
-            if (balance >= amount) {
-                balance -= amount;
-                return true;
-            }
-            return false;
-        }
-
-        public String getAccountNumber() {
+        public int getAccountNumber() {
             return accountNumber;
         }
 
@@ -91,12 +86,32 @@ public class MiniBank {
             return ownerName;
         }
 
-        public long getBalance() {
+        public double getBalance() {
             return balance;
         }
 
-        public boolean isActive() {
-            return active;
+        @Override
+        public String toString() {
+            return "Account Number: " + accountNumber +
+                    ", Owner Name: " + ownerName +
+                    ", Balance: " + balance;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+
+            if (!(o instanceof Account))
+                return false;
+
+            Account a = (Account) o;
+            return accountNumber == a.accountNumber;
+        }
+
+        @Override
+        public int hashCode() {
+            return Integer.hashCode(accountNumber);
         }
     }
 
@@ -104,61 +119,76 @@ public class MiniBank {
 
         Scanner sc = new Scanner(System.in);
 
-        BankInfo bank = new BankInfo("Mini Bank", "Main Branch");
+        BankInfo bank = new BankInfo("MiniBank", "Main Branch");
+
 
         System.out.println(bank.name());
         System.out.println(bank.branch());
 
-        Account[] accounts = new Account[3];
 
-        accounts[0] = new Account("Margish", 1000);
-        accounts[1] = new Account("Rahul", 500);
-        accounts[2] = new Account("Priya");
+        Customer.Address address = new Customer.Address(
+                "12 MG Road",
+                "Vadodara",
+                "390001");
 
-        accounts[0].deposit(500);
-        accounts[0].withdraw(300);
+        Customer customer = new Customer("Margish", address);
+        Customer copy = customer.clone();
 
-        accounts[1].deposit(1000);
-        accounts[1].withdraw(2000);
+        Account account1 = new Account(101, "Margish", 5000);
+        Account account2 = new Account(101, "Rahul", 8000);
+        Account account3 = new Account(102, "Amit", 7000);
 
-        accounts[2].deposit(700);
-        accounts[2].withdraw(200);
+        System.out.println("\nUsing toString()");
+        System.out.println(account1);
+        System.out.println(account3);
 
-        System.out.println("\nAccount Details:");
+        System.out.println("\nUsing equals()");
+        System.out.println("Account1 == Account2 : " + account1.equals(account2));
+        System.out.println("Account1 == Account3 : " + account1.equals(account3));
 
-        for (Account account : accounts) {
-            System.out.println("Account Number : " + account.getAccountNumber());
-            System.out.println("Owner Name     : " + account.getOwnerName());
-            System.out.println("Balance        : ₹" + account.getBalance());
-            System.out.println("Active         : " + account.isActive());
-            System.out.println();
+        System.out.println("\nCustomer Details");
+        System.out.println("Name : " + customer.getName());
+        System.out.println("Address : " + customer.getAddress().getLine());
+        System.out.println("City : " + customer.getAddress().getCity());
+        System.out.println("Pincode : " + customer.getAddress().getPincode());
+
+        System.out.println("\nCloned Customer");
+        System.out.println("Name : " + copy.getName());
+
+        System.out.println("\nUsing instanceof");
+        if (account1 instanceof Account) {
+            System.out.println("account1 is an Account object.");
         }
 
-        boolean run = true;
+        if (customer instanceof Customer) {
+            System.out.println("customer is a Customer object.");
+        }
 
-        while (run) {
+        int choice;
 
+        do {
+            System.out.println("\n----- MiniBank Menu -----");
             System.out.println("1. Open Account");
             System.out.println("2. Deposit");
             System.out.println("3. Withdraw");
             System.out.println("4. Transfer");
             System.out.println("5. Exit");
+            System.out.print("Enter choice: ");
 
-            System.out.print("Enter your choice: ");
-            int choice = sc.nextInt();
+            choice = sc.nextInt();
 
-            switch (choice) {
-                case 1 -> System.out.println("Open Account - To be implemented later.");
-                case 2 -> System.out.println("Deposit - To be implemented later.");
-                case 3 -> System.out.println("Withdraw - To be implemented later.");
-                case 4 -> System.out.println("Transfer - To be implemented later.");
-                case 5 -> {
-                    System.out.println("Goodbye!");
-                    run = false;
-                }
-                default -> System.out.println("Invalid choice.");
-            }
-        }
+            String message = switch (choice) {
+                case 1 -> "Open Account - To be implemented in later lab.";
+                case 2 -> "Deposit - To be implemented in later lab.";
+                case 3 -> "Withdraw - To be implemented in later lab.";
+                case 4 -> "Transfer - To be implemented in later lab.";
+                case 5 -> "Thank you for using MiniBank.";
+                default -> "Invalid Choice.";
+            };
+
+            System.out.println(message);
+
+        } while (choice != 5);
 
         sc.close();
     }
